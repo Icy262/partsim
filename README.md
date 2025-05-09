@@ -1,0 +1,2 @@
+# partsim
+Particle equilibrium simulator
