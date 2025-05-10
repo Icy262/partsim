@@ -1,6 +1,7 @@
 {
 	"files.associations": {
 		"stdio.h": "c",
-		"atomic": "c"
+		"atomic": "c",
+		"particle.h": "c"
 	}
 }
