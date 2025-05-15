@@ -9,47 +9,43 @@
 
 int main(){
 	srand(time(NULL));
-	int nparticles=100;
+	int num_particles=100;
 	int window_x=1000;
 	int window_y=1000;
+	int num_points=32;
 	struct particle *test=malloc(100 * sizeof(struct particle));
-	for(int i=0; i<100; i++) {
+	for(int i=0; i<num_particles; i++) {
 		test[i].mass=rand()%50;
 	}
-	for(int i=0; i<100; i++) {
+	for(int i=0; i<num_particles; i++) {
 		test[i].radius=0.01;//set radius to be 1% of the screen
 	}
-	for(int i=0; i<100; i++) {
+	for(int i=0; i<num_particles; i++) {
 		test[i].dx=rand()%window_x;
 	}
-	for(int i=0; i<100; i++) {
+	for(int i=0; i<num_particles; i++) {
 		test[i].dy=rand()%window_y;
 	}
-	for(int i=0; i<100; i++) {
+	for(int i=0; i<num_particles; i++) {
 		test[i].vx=rand()%100;
 	}
-	for(int i=0; i<100; i++) {
+	for(int i=0; i<num_particles; i++) {
 		test[i].vy=rand()%100;
 	}
 	glfwInit();
 	GLFWwindow* window = glfwCreateWindow(window_x, window_y, "partsim", NULL, NULL);
 	glfwMakeContextCurrent(window);
 	gladLoadGL();
-	float points[] = {
-		0.0f,  0.5f,  0.0f,
-		0.5f, -0.5f,  0.0f,
-	   -0.5f, -0.5f,  0.0f
-	 };
+	
 	GLuint vbo = 0;
 	glGenBuffers( 1, &vbo );
 	glBindBuffer( GL_ARRAY_BUFFER, vbo );
 
-	// glBufferData( GL_ARRAY_BUFFER, 9 * sizeof( float ), points, GL_STATIC_DRAW );
-	float *render=malloc(32*9*sizeof(float)*100);
-	for(int i=0; i<100; i++) {
-		memcpy(&render[32*9*i], gen_circle(&test[i], 32, window_x, window_y), 32*9*sizeof(float));
+	float *render=malloc(num_points*9*sizeof(float)*num_particles);
+	for(int i=0; i<num_particles; i++) {
+		memcpy(&render[num_points*9*i], gen_circle(&test[i], num_points, window_x, window_y), num_points*9*sizeof(float));
 	};
-	glBufferData( GL_ARRAY_BUFFER, 32*9*sizeof(float)*100, render, GL_STATIC_DRAW );
+	glBufferData( GL_ARRAY_BUFFER, num_points*9*sizeof(float)*num_particles, render, GL_STATIC_DRAW );
 
 	GLuint vao = 0;
 	glGenVertexArrays( 1, &vao );
@@ -92,7 +88,7 @@ int main(){
 		glBindVertexArray( vao );
 
 		// Draw points 0-3 from the currently bound VAO with current in-use shader.
-		glDrawArrays( GL_TRIANGLES, 0, 3*32*100 );
+		glDrawArrays( GL_TRIANGLES, 0, 3*num_points*num_particles );
 		
 		// Put the stuff we've been drawing onto the visible area.
 		glfwSwapBuffers( window );
