@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 4.0.2)
 project(partsim VERSION 0.0.0 LANGUAGES C)
-add_executable(partsim main.c)
+include_directories(glad/include)
+add_executable(partsim main.c glad/src/glad.c)
 
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)

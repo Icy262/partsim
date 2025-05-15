@@ -4,6 +4,8 @@
 		"atomic": "c",
 		"particle.h": "c",
 		"time.h": "c",
-		"glfw3.h": "c"
+		"glfw3.h": "c",
+		"gl.h": "c",
+		"random": "c"
 	}
 }
