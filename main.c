@@ -77,6 +77,23 @@ int main(){
 	glLinkProgram( shader_program );
 
 	while ( !glfwWindowShouldClose( window ) ) {
+		for(int i=0; i<num_particles; i++) {
+			test[i].dx+=test[i].vx;
+			test[i].dy+=test[i].vy;
+			if(test[i].dx>window_x||test[i].dx<0) {
+				test[i].vx*=-1;
+			}
+			if(test[i].dy>window_y||test[i].dy<0) {
+				test[i].vy*=-1;
+			}
+		}
+
+		float *render=malloc(num_points*9*sizeof(float)*num_particles);
+		for(int i=0; i<num_particles; i++) {
+			memcpy(&render[num_points*9*i], gen_circle(&test[i], num_points, window_x, window_y), num_points*9*sizeof(float));
+		};
+		glBufferData( GL_ARRAY_BUFFER, num_points*9*sizeof(float)*num_particles, render, GL_STATIC_DRAW );
+		
 		// Update window events.
 		glfwPollEvents();
 		
