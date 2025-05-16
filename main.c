@@ -13,7 +13,7 @@ int main(){
 	int window_x=1000;
 	int window_y=1000;
 	int num_points=32;
-	struct particle *test=malloc(100 * sizeof(struct particle));
+	struct particle *test=malloc(num_particles * sizeof(struct particle));
 	for(int i=0; i<num_particles; i++) {
 		test[i].mass=rand()%50;
 	}
@@ -40,12 +40,6 @@ int main(){
 	GLuint vbo = 0;
 	glGenBuffers( 1, &vbo );
 	glBindBuffer( GL_ARRAY_BUFFER, vbo );
-
-	float *render=malloc(num_points*9*sizeof(float)*num_particles);
-	for(int i=0; i<num_particles; i++) {
-		memcpy(&render[num_points*9*i], gen_circle(&test[i], num_points, window_x, window_y), num_points*9*sizeof(float));
-	};
-	glBufferData( GL_ARRAY_BUFFER, num_points*9*sizeof(float)*num_particles, render, GL_STATIC_DRAW );
 
 	GLuint vao = 0;
 	glGenVertexArrays( 1, &vao );
@@ -90,9 +84,12 @@ int main(){
 
 		float *render=malloc(num_points*9*sizeof(float)*num_particles);
 		for(int i=0; i<num_particles; i++) {
-			memcpy(&render[num_points*9*i], gen_circle(&test[i], num_points, window_x, window_y), num_points*9*sizeof(float));
+			float* buffer=gen_circle(&test[i], num_points, window_x, window_y);
+			memcpy(&render[num_points*9*i], buffer, num_points*9*sizeof(float));
+			free(buffer);
 		};
 		glBufferData( GL_ARRAY_BUFFER, num_points*9*sizeof(float)*num_particles, render, GL_STATIC_DRAW );
+		free(render);
 		
 		// Update window events.
 		glfwPollEvents();
