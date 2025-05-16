@@ -27,10 +27,10 @@ int main(){
 		test[i].dy=rand()%window_y;
 	}
 	for(int i=0; i<num_particles; i++) {
-		test[i].vx=rand()%100;
+		test[i].vx=rand()%20;
 	}
 	for(int i=0; i<num_particles; i++) {
-		test[i].vy=rand()%100;
+		test[i].vy=rand()%20;
 	}
 	glfwInit();
 	GLFWwindow* window = glfwCreateWindow(window_x, window_y, "partsim", NULL, NULL);
