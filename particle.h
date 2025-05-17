@@ -25,7 +25,7 @@ bool collision_check(struct particle *p1, struct particle *p2) { //check if part
 }
 
 float* gen_circle(struct particle *particle, int num_triangles, int window_x, int window_y) {
-	double a=6.28318530718/num_triangles; //2PI/numtriangles. a is the internal angle of the triangles;
+	double a=TAU/num_triangles; //2PI/numtriangles. a is the internal angle of the triangles;
 	float *points=malloc(num_triangles*9*sizeof(float));
 	for(int i=0; i<num_triangles; i++) {
 		int start_of_triangle=i*9;
