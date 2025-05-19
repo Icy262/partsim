@@ -7,30 +7,33 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+int num_particles=100;
+int window_x=1000;
+int window_y=1000;
+int num_points=32;
+float tick_time=(float)(0.10); //each tick models this much of a second
+struct particle *particles;
+
 int main(){
 	srand(time(NULL));
-	int num_particles=100;
-	int window_x=1000;
-	int window_y=1000;
-	int num_points=32;
-	struct particle *test=malloc(num_particles * sizeof(struct particle));
+	particles=malloc(num_particles * sizeof(struct particle));
 	for(int i=0; i<num_particles; i++) {
-		test[i].mass=rand()%50;
+		particles[i].mass=rand()%50;
 	}
 	for(int i=0; i<num_particles; i++) {
-		test[i].radius=0.01;//set radius to be 1% of the screen
+		particles[i].radius=0.01;//set radius to be 1% of the screen
 	}
 	for(int i=0; i<num_particles; i++) {
-		test[i].dx=rand()%window_x;
+		particles[i].dx=rand()%window_x;
 	}
 	for(int i=0; i<num_particles; i++) {
-		test[i].dy=rand()%window_y;
+		particles[i].dy=rand()%window_y;
 	}
 	for(int i=0; i<num_particles; i++) {
-		test[i].vx=rand()%20;
+		particles[i].vx=rand()%20;
 	}
 	for(int i=0; i<num_particles; i++) {
-		test[i].vy=rand()%20;
+		particles[i].vy=rand()%20;
 	}
 	glfwInit();
 	GLFWwindow* window = glfwCreateWindow(window_x, window_y, "partsim", NULL, NULL);
@@ -70,21 +73,19 @@ int main(){
 	glAttachShader( shader_program, vs );
 	glLinkProgram( shader_program );
 
+	bool *ticked=malloc(sizeof(bool)*num_particles);
+
 	while ( !glfwWindowShouldClose( window ) ) {
 		for(int i=0; i<num_particles; i++) {
-			test[i].dx+=test[i].vx;
-			test[i].dy+=test[i].vy;
-			if(test[i].dx>window_x||test[i].dx<0) {
-				test[i].vx*=-1;
-			}
-			if(test[i].dy>window_y||test[i].dy<0) {
-				test[i].vy*=-1;
-			}
+			ticked[i]=false;
+		}
+		for(int i=0; i<num_particles; i++) {
+			tick_particle(&ticked[i], i);
 		}
 
 		float *render=malloc(num_points*9*sizeof(float)*num_particles);
 		for(int i=0; i<num_particles; i++) {
-			float* buffer=gen_circle(&test[i], num_points, window_x, window_y);
+			float* buffer=gen_circle(&particles[i], num_points, window_x, window_y);
 			memcpy(&render[num_points*9*i], buffer, num_points*9*sizeof(float));
 			free(buffer);
 		};

@@ -2,6 +2,13 @@
 #include <math.h>
 #include <stdlib.h>
 
+extern int num_particles;
+extern int window_x;
+extern int window_y;
+extern int num_point;
+extern float tick_time;
+extern struct particle *particles;
+
 struct particle {
 	double mass;
 	double radius;
@@ -12,9 +19,6 @@ struct particle {
 	double vy;
 };
 
-struct particle* collision(struct particle *p1, struct particle *p2){ //assume perfectly elastic collision of point masses
-}
-
 bool collision_check(struct particle *p1, struct particle *p2) { //check if particles will collide using discriminant
 	double delta_dx=p1->dx-p2->dx;
 	double delta_dy=p1->dy-p2->dy;
@@ -24,8 +28,38 @@ bool collision_check(struct particle *p1, struct particle *p2) { //check if part
 	else return false;
 }
 
+void collision(struct particle *p1, struct particle *p2) { //assume perfectly elastic collision of point masses
+}
+
+void edge_collision(struct particle *particle) { //TODO: don't allow particle to go past the edge of the screen
+	if(particle->dx>window_x||particle->dx<0) {
+		particle->vx*=-1;
+	}
+	if(particle->dy>window_x||particle->dy<0) {
+		particle->vy*=-1;
+	}
+}
+
+void tick_particle(bool *ticked, int current_particle) {
+	if(ticked[current_particle]) return;
+	for(int i=current_particle; i<num_particles; i++) {
+		if(collision_check(&particles[current_particle], &particles[i])) {
+			collision(&particles[current_particle], &particles[i]);
+			edge_collision(&particles[current_particle]);
+			edge_collision(&particles[i]);
+			ticked[current_particle]=true;
+			ticked[i]=true;
+			return;
+		}
+	}
+	//TODO: prevent particles from going past screen border before turning around
+	particles[current_particle].dx+=particles[current_particle].vx*tick_time;
+	particles[current_particle].dy+=particles[current_particle].vy*tick_time;
+	edge_collision(&particles[current_particle]);
+}
+
 float* gen_circle(struct particle *particle, int num_triangles, int window_x, int window_y) {
-	double a=TAU/num_triangles; //2PI/numtriangles. a is the internal angle of the triangles;
+	double a=2*M_PI/num_triangles; //2PI/numtriangles. a is the internal angle of the triangles;
 	float *points=malloc(num_triangles*9*sizeof(float));
 	for(int i=0; i<num_triangles; i++) {
 		int start_of_triangle=i*9;
