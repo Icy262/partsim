@@ -11,7 +11,7 @@ int num_particles=100;
 int window_x=1000;
 int window_y=1000;
 int num_points=32;
-float tick_time=(float)(0.10); //each tick models this much of a second
+float tick_time=(float)(0.001); //each tick models this much of a second
 struct particle *particles;
 
 int main(){
@@ -30,10 +30,9 @@ int main(){
 		particles[i].dy=rand()%window_y;
 	}
 	for(int i=0; i<num_particles; i++) {
-		particles[i].vx=rand()%20;
-	}
-	for(int i=0; i<num_particles; i++) {
-		particles[i].vy=rand()%20;
+		float angle=2*M_PI*rand()/RAND_MAX;
+		particles[i].vx=500*sin(angle);
+		particles[i].vy=500*cos(angle);
 	}
 	glfwInit();
 	GLFWwindow* window = glfwCreateWindow(window_x, window_y, "partsim", NULL, NULL);
@@ -85,7 +84,7 @@ int main(){
 
 		float *render=malloc(num_points*9*sizeof(float)*num_particles);
 		for(int i=0; i<num_particles; i++) {
-			float* buffer=gen_circle(&particles[i], num_points, window_x, window_y);
+			float* buffer=gen_circle(i);
 			memcpy(&render[num_points*9*i], buffer, num_points*9*sizeof(float));
 			free(buffer);
 		};

@@ -5,7 +5,7 @@
 extern int num_particles;
 extern int window_x;
 extern int window_y;
-extern int num_point;
+extern int num_points;
 extern float tick_time;
 extern struct particle *particles;
 
@@ -19,12 +19,12 @@ struct particle {
 	double vy;
 };
 
-bool collision_check(struct particle *p1, struct particle *p2) { //check if particles will collide using discriminant
-	double delta_dx=p1->dx-p2->dx;
-	double delta_dy=p1->dy-p2->dy;
-	double delta_vx=p1->vx-p2->vx;
-	double delta_vy=p1->vy-p2->vy;
-	if(pow(2*(delta_dx*delta_vx+delta_dy*delta_vy), 2)-4*(pow(delta_vx, 2)+pow(delta_vy, 2))*(pow(delta_dx, 2)+pow(delta_dy, 2)-pow(p1->radius+p2->radius, 2))>0) return true;
+bool collision_check(struct particle *p_1, struct particle *p_2) { //check if particles will collide using discriminant
+	double delta_dx=p_1->dx-p_2->dx;
+	double delta_dy=p_1->dy-p_2->dy;
+	double delta_vx=p_1->vx-p_2->vx;
+	double delta_vy=p_1->vy-p_2->vy;
+	if(pow(2*(delta_dx*delta_vx+delta_dy*delta_vy), 2)-4*(pow(delta_vx, 2)+pow(delta_vy, 2))*(pow(delta_dx, 2)+pow(delta_dy, 2)-pow(p_1->radius+p_2->radius, 2))>0) return true;
 	else return false;
 }
 
@@ -58,21 +58,21 @@ void tick_particle(bool *ticked, int current_particle) {
 	edge_collision(&particles[current_particle]);
 }
 
-float* gen_circle(struct particle *particle, int num_triangles, int window_x, int window_y) {
-	double a=2*M_PI/num_triangles; //2PI/numtriangles. a is the internal angle of the triangles;
-	float *points=malloc(num_triangles*9*sizeof(float));
-	for(int i=0; i<num_triangles; i++) {
+float* gen_circle(int current_particle) {
+	double a=2*M_PI/num_points; //2PI/numtriangles. a is the internal angle of the triangles;
+	float *points=malloc(num_points*9*sizeof(float));
+	for(int i=0; i<num_points; i++) {
 		int start_of_triangle=i*9;
-		points[start_of_triangle]=2*particle->dx/window_x-1.0f;
-		points[start_of_triangle+1]=2*particle->dy/window_x-1.0f;
+		points[start_of_triangle]=2*particles[current_particle].dx/window_x-1.0f;
+		points[start_of_triangle+1]=2*particles[current_particle].dy/window_x-1.0f;
 		points[start_of_triangle+2]=0;
 
-		points[start_of_triangle+3]=2*particle->dx/window_x-1.0f + particle->radius*sin(i*a);
-		points[start_of_triangle+4]=2*particle->dy/window_y-1.0f + particle->radius*cos(i*a);
+		points[start_of_triangle+3]=2*particles[current_particle].dx/window_x-1.0f + particles[current_particle].radius*sin(i*a);
+		points[start_of_triangle+4]=2*particles[current_particle].dy/window_y-1.0f + particles[current_particle].radius*cos(i*a);
 		points[start_of_triangle+5]=0;
 
-		points[start_of_triangle+6]=2*particle->dx/window_x-1.0f + particle->radius*sin((i+1)*a);
-		points[start_of_triangle+7]=2*particle->dy/window_y-1.0f + particle->radius*cos((i+1)*a);
+		points[start_of_triangle+6]=2*particles[current_particle].dx/window_x-1.0f + particles[current_particle].radius*sin((i+1)*a);
+		points[start_of_triangle+7]=2*particles[current_particle].dy/window_y-1.0f + particles[current_particle].radius*cos((i+1)*a);
 		points[start_of_triangle+8]=0;
 	}
 	return points;
