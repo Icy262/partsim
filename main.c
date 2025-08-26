@@ -6,12 +6,12 @@
 #include <string.h>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <math.h>
 
 int num_particles=100;
 int window_x=1000;
 int window_y=1000;
 int num_points=32;
-float tick_time=(float)(0.001); //each tick models this much of a second
 struct particle *particles;
 
 int main(){
@@ -72,24 +72,12 @@ int main(){
 	glAttachShader( shader_program, vs );
 	glLinkProgram( shader_program );
 
-	bool *ticked=malloc(sizeof(bool)*num_particles);
-
+	float *render=malloc(num_points*9*sizeof(float)*num_particles);
 	while ( !glfwWindowShouldClose( window ) ) {
 		for(int i=0; i<num_particles; i++) {
-			ticked[i]=false;
-		}
-		for(int i=0; i<num_particles; i++) {
-			tick_particle(&ticked[i], i);
-		}
-
-		float *render=malloc(num_points*9*sizeof(float)*num_particles);
-		for(int i=0; i<num_particles; i++) {
-			float* buffer=gen_circle(i);
-			memcpy(&render[num_points*9*i], buffer, num_points*9*sizeof(float));
-			free(buffer);
+			memcpy(&render[num_points*9*i], gen_circle(i), num_points*9*sizeof(float));
 		};
 		glBufferData( GL_ARRAY_BUFFER, num_points*9*sizeof(float)*num_particles, render, GL_STATIC_DRAW );
-		free(render);
 		
 		// Update window events.
 		glfwPollEvents();
@@ -107,5 +95,6 @@ int main(){
 		// Put the stuff we've been drawing onto the visible area.
 		glfwSwapBuffers( window );
 	}
+	free(render);
 	glfwTerminate();
 }
