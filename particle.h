@@ -20,8 +20,8 @@ struct particle {
 	double vy;
 };
 
-struct next_collision {
-	int particle; //index of particle collision will happen with, OR -1 for wall
+struct next_collision { //stores information about a particle's next collision. must be associated with a specific particle or data is meaningless
+	int other_particle; //index of the particle the collision will happen with, OR -1 for wall
 	double time_to_collision; //time in seconds until collision will happen
 };
 
@@ -59,9 +59,9 @@ double time_to_collision_wall(struct particle *p) {
 	return time_to_x_wall < time_to_y_wall ? time_to_x_wall : time_to_y_wall;
 }
 
-struct next_collision find_next_collision(int current) {
-	double lowest_time=time_to_collision_wall(&particles[current]); //we know that all particles will eventually hit a wall, therefore we should check if there will be a particle collision before then
-	int lowest_index=-1; //if a particle collision will happen, this will change, if not we know that it will be a wall collision
+struct next_collision find_next_collision(int current) { //find the next collision for any given particle, not necessarily the next collision
+	double lowest_time = time_to_collision_wall(&particles[current]); //we know that all particles will eventually hit a wall, therefore we should check if there will be a particle collision before then
+	int index = -1; //if a particle collision will happen, this will change, if not we know that it will be a wall collision
 	for(int i=0; i<num_particles; i++) {
 		if(collision_check(&particles[current], &particles[i])) {
 			if(time_to_collision(&particles[current], &particles[i])<lowest_time) {
@@ -70,6 +70,7 @@ struct next_collision find_next_collision(int current) {
 			}
 		}
 	}
+	return struct next_collision to_return {index, lowest_time};
 }
 
 void convert_to_alt_FOR(struct particle *p, double axis) { //axis is between 0-2pi rad clockwise from vertical and is perpendicular to a line drawn between the centres of the two particles
@@ -87,6 +88,23 @@ void convert_to_regular_FOR(struct particle *p, double axis) {
 }
 
 void collision(struct particle *p1, struct particle *p2) { //assume perfectly elastic collision of point masses
+	//initial x velocity stays identical along the axis of collision
+	//y velocity changes as if there was a 1d head-on collision
+	struct particle new_p1, new_p2;
+	double p1_total = pow(pow(p1->vx) + pow(v1->vy, 2), 0.5);
+	double p2_total = pow(pow(p2->vx) + pow(v2->vy, 2), 0.5);
+	new_p1.vx = p1->vx;
+	new_p2.vx = p2->vx;
+	new_p1.vy = p1_total*(p1->mass - p2->mass)/(p1->mass + p2->mass) + 2*p2_total*p2->mass/(p1->mass + p2->mass);
+	new_p2.vy = p2_total*(p2->mass - p1->mass)/(p1->nass + p2->mass) + 2*p2_total*p2->mass/(p1->mass + p2->mass);
+}
+
+void do_movement(double time) { //will not check for or process collisions and should not be called with a time greater than the amount of time until the next collision
+	for(int i = 0; i < num_particles; i++) {
+		particles[i]->dx += particles[i]->vx*time;
+		particles[i]->dy += particles[i]->vy*time;
+	}
+	time_since_last_frame += time;
 }
 
 float* gen_circle(int current_particle) {

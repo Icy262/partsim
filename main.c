@@ -8,13 +8,15 @@
 #include <GLFW/glfw3.h>
 #include <math.h>
 
-int num_particles=100;
-int window_x=1000;
-int window_y=1000;
-int num_points=32;
+int num_particles = 100;
+int window_x = 1000;
+int window_y = 1000;
+int num_points = 32;
 struct particle *particles;
+double time_since_last_frame = 0;
+int framerate = 60;
 
-int main(){
+int main() {
 	srand(time(NULL));
 	particles=malloc(num_particles * sizeof(struct particle));
 	for(int i=0; i<num_particles; i++) {
@@ -45,7 +47,8 @@ int main(){
 
 	GLuint vao = 0;
 	glGenVertexArrays( 1, &vao );
-	glBindVertexArray( vao );
+	glBi
+		ndVertexArray( vao );
 	glEnableVertexAttribArray( 0 );
 	glBindBuffer( GL_ARRAY_BUFFER, vbo );
 	glVertexAttribPointer( 0, 3, GL_FLOAT, GL_FALSE, 0, NULL );
@@ -72,8 +75,47 @@ int main(){
 	glAttachShader( shader_program, vs );
 	glLinkProgram( shader_program );
 
-	float *render=malloc(num_points*9*sizeof(float)*num_particles);
+	float *render = malloc(num_points*9*sizeof(float)*num_particles);
+	int particle_colliding_next; //particle colliding next
+	struct next_collision next_overall_collision; //what it will collide with
+	bool next_overall_collision_outdated = true; //if this collision has happened or is pending. exists to allow collisions that will not happen till the next frame to not have to be rechecked
 	while ( !glfwWindowShouldClose( window ) ) {
+		if(!next_overall_collision_outdated && next_overall_collision.time_to_collision <= 1/framerate - time_since_last_frame) {
+			do_movement(next_overall_collision.time_to_collision);
+			collision(&particles[particle_colliding_next], &particles[next_overall_collision.particle]);
+			next_overall_collision_outdated=true;
+		} else if(!next_overall_collision_outdated && next_overall_collision.time_to_collision > 1/framerate - time_since_last_frame) {
+			do_movement(1/framerate - time_since_last_frame);
+			next_overall_collision.time_to_collision -= 1/framerate - time_since_last_frame;
+		}
+
+		while(time_since_last_frame < 1/framerate) {
+			struct next_collision *next = malloc(num_particles*sizeof(next_collision));
+			for(int i = 0; i < num_particles; i++) {
+				next[i] = find_next_collision[i];
+			}
+			double lowest_time = time_to_collision_wall(&particles[0]); //we need to initialize with some value and this seemed convenient
+			int index = 0; //in the case that particle 0 colliding with a wall actually is the next collision, it's a good idea to define this
+			for(int i = 0; i < num_particles; i++) {
+				if(next[i]->time_to_collision < lowest_time) {
+					lowest_time = next[i]->time_to_collision;
+					index = i;
+				}
+			}
+			if(time_since_last_frame + lowest_time < 1/framerate) {
+				do_movement(lowest_time);
+				collision(index, next[i]->particle);
+			} else {
+				do_movement(1/framerate - time_since_last_frame);
+				next[index]->time_to_collision -= lowest_time;
+				particle_colliding_next = index;
+				next_overall_collision = *next[index];
+				next_overall_collision_outdated = false;
+			}
+		}
+
+		//rendering particles
+		time_since_last_frame = 0;
 		for(int i=0; i<num_particles; i++) {
 			memcpy(&render[num_points*9*i], gen_circle(i), num_points*9*sizeof(float));
 		};
