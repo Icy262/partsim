@@ -6,6 +6,8 @@
 		"time.h": "c",
 		"glfw3.h": "c",
 		"gl.h": "c",
-		"random": "c"
+		"random": "c",
+		"stdbool.h": "c",
+		"xutility": "c"
 	}
 }
