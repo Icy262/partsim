@@ -8,27 +8,25 @@
 #include <GLFW/glfw3.h>
 #include <math.h>
 
-int num_particles = 100;
+int num_particles = 2;
 int window_x = 1000;
 int window_y = 1000;
 int num_points = 32;
-struct particle *particles;
 struct wall *walls;
+struct particle *particles;
 double time_since_last_frame = 0;
 int framerate = 60;
+int num_walls = 4;
 
 int main() {
 	srand(time(NULL));
-	particles=malloc(num_particles * sizeof(struct particle));
-	walls=malloc(4 * sizeof(struct wall));
-	double orgin_x;
-	double orgin_y;
-	double direction; //in radians clockwise from vertical
-	double length;
-	walls[0] = (struct wall) {0, 0, M_PI_2, 1000};
-	walls[1] = (struct wall) {1000, 0, M_PI, 1000};
-	walls[2] = (struct wall) {1000, 1000, 3*M_PI_2, 1000};
-	walls[3] = (struct wall) {0, 1000, 0, 1000};
+	walls = malloc(num_walls*sizeof(struct wall));
+	particles = malloc(num_particles*sizeof(struct particle));
+	//There must be a wall containing the entire simulation, or undefined behaviour will occur when checking for wall collisions
+	walls[0] = (struct wall) {0, 0, 0, window_y, 0, 0.0, true};
+	walls[1] = (struct wall) {0, window_y, M_PI_2, window_x, 0, 0.0, true};
+	walls[2] = (struct wall) {window_x, window_y, M_PI, window_y, 0, 0.0, true};
+	walls[3] = (struct wall) {window_x, 0, 3*M_PI_2, window_x, 0, 0.0, true};
 	for(int i=0; i<num_particles; i++) {
 		particles[i].mass=rand()%50;
 	}
@@ -85,42 +83,37 @@ int main() {
 	glLinkProgram( shader_program );
 
 	float *render = malloc(num_points*9*sizeof(float)*num_particles);
-	int particle_colliding_next; //particle colliding next
-	struct next_collision next_overall_collision; //what it will collide with
-	bool next_overall_collision_outdated = true; //if this collision has happened or is pending. exists to allow collisions that will not happen till the next frame to not have to be rechecked
+	struct collision next_collision;
+	bool next_collision_outdated = true;
 	while ( !glfwWindowShouldClose( window ) ) {
-		if(!next_overall_collision_outdated && next_overall_collision.time_to_collision <= 1.0/framerate - time_since_last_frame) {
-			do_movement(next_overall_collision.time_to_collision);
-			collision(&particles[particle_colliding_next], &particles[next_overall_collision.other_particle]);
-			next_overall_collision_outdated=true;
-		} else if(!next_overall_collision_outdated && next_overall_collision.time_to_collision > 1.0/framerate - time_since_last_frame) {
-			do_movement(1.0/framerate - time_since_last_frame);
-			next_overall_collision.time_to_collision -= 1.0/framerate - time_since_last_frame;
+		if(!next_collision_outdated && next_collision.time_to_collision <= 1.0/framerate - time_since_last_frame) {
+			do_movement(next_collision.time_to_collision);
+
+			collision(next_collision);
+			next_collision_outdated=true;
+		} else if(!next_collision_outdated && next_collision.time_to_collision > 1.0/framerate - time_since_last_frame) {
+			double time_to_step = 1.0/framerate - time_since_last_frame; //we need to make a copy of this value, because do_movement will change the time_since_last_frame
+			do_movement(time_to_step);
+			next_collision.time_to_collision -= time_to_step;
 		}
 
 		while(time_since_last_frame < 1.0/framerate) {
-			double lowest_time = time_to_collision_wall(&particles[0]); //we need to initialize with some value and this seemed convenient
-	printf("test %lf\n", lowest_time);
-			int index = 0; //in the case that particle 0 colliding with a wall actually is the next collision, it's a good idea to set this
+			next_collision = find_any_collision(0); //initialize by finding a random collision, in this case we used 0 for convenience's sake
 			for(int i = 0; i < num_particles; i++) {
-				if(find_next_collision(i).time_to_collision < lowest_time) {
-					lowest_time = find_next_collision(i).time_to_collision;
-					index = i;
+				if(find_next_collision(i).time_to_collision < next_collision.time_to_collision) {
+					next_collision = find_next_collision(i);
 				}
 			}
-			next_overall_collision = find_next_collision(index);
-			if(time_since_last_frame + lowest_time < 1.0/framerate) {
-				do_movement(lowest_time);
-				collision(&particles[index], &particles[next_overall_collision.other_particle]);
+			if(time_since_last_frame + next_collision.time_to_collision < 1.0/framerate) {
+				do_movement(next_collision.time_to_collision);
+				collision(next_collision);
 			} else {
-				do_movement(1.0/framerate - time_since_last_frame);
-				next_overall_collision.time_to_collision -= lowest_time;
-				particle_colliding_next = index;
-				next_overall_collision_outdated = false;
-			}			
+				double time_to_tick = 1.0/framerate - time_since_last_frame; //do_movement changes the time since last frame, causing inaccurate timekeeping
+				do_movement(time_to_tick);
+				next_collision.time_to_collision -= time_to_tick;
+				next_collision_outdated = false;
+			}		
 		}
-		printf("NEW RENDER");
-		system("pause");
 		//rendering particles
 		time_since_last_frame = 0;
 		for(int i=0; i<num_particles; i++) {
@@ -145,5 +138,7 @@ int main() {
 		glfwSwapBuffers( window );
 	}
 	free(render);
+	free(walls);
+	free(particles);
 	glfwTerminate();
 }
